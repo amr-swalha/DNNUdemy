@@ -22,7 +22,7 @@ namespace Udemy.DNNCourse.MVCModule.Models
     //setup the primary key for table
     [PrimaryKey("ItemId", AutoIncrement = true)]
     //configure caching using PetaPoco
-    [Cacheable("Items", CacheItemPriority.Default, 20)]
+    //[Cacheable("Items", CacheItemPriority.Default, 20)]
     //scope the objects to the ModuleId of a module on a page (or copy of a module on a page)
     [Scope("ModuleId")]
     public class Item

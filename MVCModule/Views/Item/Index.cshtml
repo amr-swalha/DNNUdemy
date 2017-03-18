@@ -1,10 +1,13 @@
-﻿@inherits DotNetNuke.Web.Mvc.Framework.DnnWebViewPage<IEnumerable< Udemy.DNNCourse.MVCModule.Models.Item >>
+﻿@inherits DotNetNuke.Web.Mvc.Framework.DnnWebViewPage<IEnumerable<Udemy.DNNCourse.MVCModule.Models.Item>>
 
 @using System.Text.RegularExpressions
 @using DotNetNuke.Web.Mvc.Helpers
 
 
 <div id="Items-@Dnn.ModuleContext.ModuleId">
+    <h3>Hello @Dnn.User.DisplayName</h3>
+    <a href="@Url.Action("Add")">Add new item</a>
+
     @if (Model.Count() == 0)
     {
         <p>@Dnn.LocalizeString("NoItems")</p>
@@ -18,16 +21,17 @@
                     <h3>@item.ItemName</h3>
                     <div class="tm_td">@item.ItemDescription</div>
                     @{
-                        if (Dnn.ModuleContext.IsEditable)
-                        {
-                            <div>
-                                <a href="@Url.Action("Edit", "Item", new {ctl = "Edit", itemId = item.ItemId})">@Dnn.LocalizeString("EditItem")</a>
+
+                        <div>
+                            <a href="@Url.Action("Edit", "Item", new {ctl = "Edit", itemId = item.ItemId})">@Dnn.LocalizeString("EditItem")</a>
+                            @if (Dnn.User.IsInRole("Administrators"))
+                            {
                                 <a href="@Url.Action("Delete", "Item", new {itemId = item.ItemId})">@Dnn.LocalizeString("DeleteItem")</a>
-                            </div>
-                        }
+                            }
+                        </div>
                     }
                 </li>
-            }
+                        }
         </ul>
-    }
+                        }
 </div>

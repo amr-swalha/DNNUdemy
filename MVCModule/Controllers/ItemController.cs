@@ -19,6 +19,8 @@ using DotNetNuke.Web.Mvc.Framework.Controllers;
 using DotNetNuke.Web.Mvc.Framework.ActionFilters;
 using DotNetNuke.Entities.Users;
 using DotNetNuke.Framework.JavaScriptLibraries;
+using DotNetNuke.Services.Social.Notifications;
+using System.Collections.Generic;
 
 namespace Udemy.DNNCourse.MVCModule.Controllers
 {
@@ -36,11 +38,7 @@ namespace Udemy.DNNCourse.MVCModule.Controllers
         {
             DotNetNuke.Framework.JavaScriptLibraries.JavaScript.RequestRegistration(CommonJs.DnnPlugins);
 
-            var userlist = UserController.GetUsers(PortalSettings.PortalId);
-            var users = from user in userlist.Cast<UserInfo>().ToList()
-                        select new SelectListItem { Text = user.DisplayName, Value = user.UserID.ToString() };
-
-            ViewBag.Users = users;
+            GetAllUsers();
 
             var item = (itemId == -1)
                  ? new Item { ModuleId = ModuleContext.ModuleId }
@@ -80,8 +78,47 @@ namespace Udemy.DNNCourse.MVCModule.Controllers
         [ModuleAction(ControlKey = "Edit", TitleKey = "AddItem")]
         public ActionResult Index()
         {
-            var items = ItemManager.Instance.GetItems(ModuleContext.ModuleId);
+            
+            var items = ItemManager.Instance.GetItems(ModuleContext.ModuleId)
+                .Where(x => x.AssignedUserId == User.UserID);
+            
             return View(items);
+        }
+
+        [NonAction]
+        public void GetAllUsers()
+        {
+            var userlist = UserController.GetUsers(PortalSettings.PortalId);
+            var users = from user in userlist.Cast<UserInfo>().ToList()
+                        select new SelectListItem { Text = user.DisplayName, Value = user.UserID.ToString() };
+            
+            ViewBag.Users = users;
+        }
+
+        public ActionResult Add()
+        {
+            DotNetNuke.Framework.JavaScriptLibraries.JavaScript.RequestRegistration(CommonJs.DnnPlugins);
+            GetAllUsers();
+            var item = new Item { ModuleId = ModuleContext.ModuleId };
+            return View(item);
+        }
+        [HttpPost]
+        public ActionResult Add(Item item)
+        {
+            item.CreatedByUserId = User.UserID;
+            ItemManager.Instance.CreateItem(item);
+            var notification = NotificationsController.Instance.GetNotificationType("HtmlNotification");
+            var notif = new Notification()
+            {
+                NotificationTypeID = notification.NotificationTypeId,
+                Subject = "a new item has been assigned to you",
+                Body = "Item: "+ item.ItemName,
+                SenderUserID = User.UserID
+            };
+            var lstUser = new List<UserInfo>();
+            lstUser.Add(UserController.GetUserById(ModuleContext.PortalId, item.AssignedUserId == -1 ? 1: item.AssignedUserId));
+            NotificationsController.Instance.SendNotification(notif, ModuleContext.PortalId, null, lstUser);
+            return RedirectToDefaultRoute();
         }
     }
 }
